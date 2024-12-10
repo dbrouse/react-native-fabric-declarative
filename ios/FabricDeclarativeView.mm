@@ -7,6 +7,14 @@
 
 #import "RCTFabricComponentsPlugins.h"
 
+// 1️⃣ 👇 add this swift bridging header as a dependency
+#if __has_include("react_native_fabric_declarative/react_native_fabric_declarative-Swift.h")
+#import "react_native_fabric_declarative/react_native_fabric_declarative-Swift.h"
+#else
+#import "react_native_fabric_declarative-Swift.h"
+#endif
+// 👆 add this
+
 using namespace facebook::react;
 
 @interface FabricDeclarativeView () <RCTFabricDeclarativeViewViewProtocol>
@@ -14,7 +22,7 @@ using namespace facebook::react;
 @end
 
 @implementation FabricDeclarativeView {
-    UIView * _view;
+    SwiftUIViewManager* _manager; // 2️⃣ 👈 update FabricDeclarativeView implementation
 }
 
 + (ComponentDescriptorProvider)componentDescriptorProvider
@@ -28,9 +36,9 @@ using namespace facebook::react;
     static const auto defaultProps = std::make_shared<const FabricDeclarativeViewProps>();
     _props = defaultProps;
 
-    _view = [[UIView alloc] init];
+    _manager = [[SwiftUIViewManager alloc] init]; // 3️⃣ 👈 replace with this code
 
-    self.contentView = _view;
+    self.contentView = [_manager getView]; // 4️⃣ 👈 replace with this code
   }
 
   return self;
@@ -41,10 +49,7 @@ using namespace facebook::react;
     const auto &oldViewProps = *std::static_pointer_cast<FabricDeclarativeViewProps const>(_props);
     const auto &newViewProps = *std::static_pointer_cast<FabricDeclarativeViewProps const>(props);
 
-    if (oldViewProps.color != newViewProps.color) {
-        NSString * colorToConvert = [[NSString alloc] initWithUTF8String: newViewProps.color.c_str()];
-        [_view setBackgroundColor:[self hexStringToColor:colorToConvert]];
-    }
+    // 5️⃣ 🧹 clean the body of this method, we will fill it in the step 2.
 
     [super updateProps:props oldProps:oldProps];
 }
@@ -54,18 +59,6 @@ Class<RCTComponentViewProtocol> FabricDeclarativeViewCls(void)
     return FabricDeclarativeView.class;
 }
 
-- hexStringToColor:(NSString *)stringToConvert
-{
-    NSString *noHashString = [stringToConvert stringByReplacingOccurrencesOfString:@"#" withString:@""];
-    NSScanner *stringScanner = [NSScanner scannerWithString:noHashString];
-
-    unsigned hex;
-    if (![stringScanner scanHexInt:&hex]) return nil;
-    int r = (hex >> 16) & 0xFF;
-    int g = (hex >> 8) & 0xFF;
-    int b = (hex) & 0xFF;
-
-    return [UIColor colorWithRed:r / 255.0f green:g / 255.0f blue:b / 255.0f alpha:1.0f];
-}
+// 6️⃣ 🧹 delete hexStringToColor function, we won't need it anymore
 
 @end
